@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Violin Coach V10.8.0 节奏助教控制台{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='control.css') }}?v=10.8.0">{% endblock %}
+{% block content %}
+<section class="control-hero">
+  <div>
+    <div class="eyebrow">V10.8.0 · MODE ACK · Rhythm Teacher</div>
+    <h2>小提琴助教控制台</h2>
+    <p>音准、逐音跟拍、连续节奏测试、完整演奏四种模式；电脑和语音都能控制。投影端只显示乐谱、节拍、老师评论和指板。</p>
+  </div>
+  <div class="hero-actions"><a class="button" href="/hud" target="_blank">打开投影 HUD</a><span id="connectionBadge" class="status-badge">等待 ESP32</span></div>
+</section>
+
+<div id="errorBox" class="error-box" hidden></div>
+
+<section class="control-grid">
+  <article class="panel span-2">
+    <div class="panel-head"><div><span class="kicker">连接</span><h3>ESP32 / 串口</h3></div><span id="buildTag">V10.8.0</span><span id="firmwareStatus" style="margin-left:10px;font-size:12px;color:#6b7280">ESP32固件：等待连接</span></div>
+    <div class="form-grid serial-row">
+      <label>串口<select id="portSelect"></select></label>
+      <label>波特率<select id="baudSelect"><option value="115200" selected>115200</option><option value="230400">230400</option><option value="460800">460800</option></select></label>
+      <button class="button secondary" id="refreshPorts" type="button">刷新串口</button>
+      <button class="button" id="connectButton" type="button">连接 ESP32</button>
+      <button class="button ghost" id="disconnectButton" type="button">断开</button>
+    </div>
+  </article>
+
+  <article class="panel span-2">
+    <div class="panel-head"><div><span class="kicker">曲目与播放</span><h3>电脑控制</h3></div><small>语音同样可用</small></div>
+    <div class="song-start-row">
+      <label>曲目<select id="songSelect"><option value="">加载曲库中…</option></select></label>
+      <button class="button success" id="startSongButton" type="button">开始曲目</button>
+      <button class="button secondary" id="pauseButton" type="button">暂停</button>
+      <button class="button secondary" id="continueButton" type="button">继续</button>
+      <button class="button danger" id="endButton" type="button">结束</button>
+    </div>
+    <div class="transport-row">
+      <button class="transport" id="previousButton" type="button">← 上一音</button>
+      <button class="transport primary" id="nextButton" type="button">下一音 / 跳过 →</button>
+      <button class="transport" id="tempoDownButton" type="button">− 慢 10%</button>
+      <button class="transport" id="tempoResetButton" type="button">恢复原速</button>
+      <button class="transport" id="tempoUpButton" type="button">+ 快 10%</button>
+    </div>
+  </article>
+
+  <article class="panel span-2 rhythm-control-panel">
+    <p id="songSwitchStatus" role="status">可中途换曲；同曲保留进度。</p>
+    <div class="transport-row">
+      <button class="transport" id="phraseRepeat" type="button">重练本段</button>
+      <button class="transport" id="phraseSlowRepeat" type="button">慢速重练（−15%）</button>
+      <button class="transport primary" id="phraseNext" type="button">下一段</button>
+      <button class="transport" id="restartSong" type="button">明确重新开始整曲</button>
+      <a class="button ghost" href="/">曲库 / 节拍编辑</a>
+      <a class="button ghost" href="/api/coach/diagnostics">下载检查报告</a>
+    </div>
+    <div class="panel-head"><div><span class="kicker">V10.8.0 逐音跟拍</span><h3>练习模式 / BPM / 节拍器</h3></div><span id="modeBadge" class="mode-badge">音准模式</span></div>
+    <div class="mode-row">
+      <button class="mode-button active" id="modePitch" type="button" data-mode="PITCH"><strong>音准练习</strong><small>拉准后快速下一音</small></button>
+      <button class="mode-button" id="modeFollow" type="button" data-mode="FOLLOW"><strong>跟拍练习</strong><small>提示可以起弓 → 拉准并拉满 → 停弓后下一音</small></button>
+      <button class="mode-button" id="modeRhythm" type="button" data-mode="RHYTHM"><strong>连续节奏测试</strong><small>预备后按时间走，不等你；两小节后总结</small></button>
+      <button class="mode-button" id="modeFull" type="button" data-mode="FULL"><strong>完整演奏</strong><small>预备拍后整曲按时间推进；音准与起音分别反馈</small></button>
+    </div>
+    <div class="rhythm-settings">
+      <label class="tempo-set">BPM
+        <div><input id="tempoInput" type="number" min="40" max="220" step="1" value="90"><button class="button compact" id="tempoSetButton" type="button">设置速度</button></div>
+      </label>
+      <label>节奏容差
+        <select id="rhythmTolerance">
+          <option value="200">宽松 ±200ms</option>
+          <option value="140" selected>标准 ±140ms</option>
+          <option value="80">严格 ±80ms</option>
+        </select>
+      </label>
+      <div class="metro-controls">
+        <button class="button secondary" id="metronomeToggle" type="button">打开节拍器</button>
+        <label class="checkline"><input id="metronomeSound" type="checkbox"> 此页播放节拍（HUD播音时保持关闭）</label>
+      </div>
+      <div class="beat-monitor">
+        <div id="controlBeatDots" class="beat-dots"><i></i><i></i><i></i><i></i></div>
+        <strong id="beatLabel">第 — 拍</strong>
+        <span id="noteDurationText">时值 —</span>
+      </div>
+    </div>
+<section id="controlFollowPanel" class="follow-panel" hidden aria-label="逐音跟拍时长">
+  <strong id="controlFollowPrompt" class="follow-prompt" role="status">预备：请保持安静</strong>
+  <span id="controlFollowTime" class="follow-time">已拉 0 秒 / 目标 — 秒</span>
+  <div id="controlFollowTrack" class="follow-track" role="progressbar" aria-label="当前音时长" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="controlFollowFill"></i></div>
+  <small id="controlFollowRetry">当前音重试 0 次</small>
+</section>
+    <div class="rhythm-progress"><i id="controlRhythmProgress"></i></div>
+    <p class="rhythm-help">跟拍练习：音高达标时累计时长，没拉满不换音；拉满后停弓，每个音之间分开拉。连续节奏测试测“起音早晚”：10毫秒麦克风音量窗口检测清楚的起弓，与谱面预期起音比较；负数为早，正数为晚。请用清楚分弓，持续同音或没有音量变化的连弓不能可靠测起音。音准单独显示，漏拉也按时间继续；两小节后暂停。BPM表示每分钟四分音符数。</p>
+    <label>起音延迟补偿（ms，先保持0；正数从测得误差中扣除） <input id="rhythmOffset" type="number" min="-300" max="300" step="10" value="0"><button id="rhythmOffsetSet" class="button compact" type="button">应用补偿</button></label>
+    <details><summary>本次起音测量记录（最近12个音）</summary><table><thead><tr><th>音符序号</th><th>音</th><th>起音误差</th><th>判断</th></tr></thead><tbody id="rhythmEvents"></tbody></table></details>
+
+  </article>
+
+  <article class="panel span-2">
+    <div class="voice-guide">
+      <div>
+        <span class="wake-label">唤醒词</span><strong>你好小智</strong>
+        <p>先说“你好小智”，看到“正在听”后再说命令。新增：“音准模式 / 跟拍练习 / 连续节奏测试 / 完整模式 / 打开节拍器 / 关闭节拍器 / 速度八十 / 速度一百二十”。</p>
+      </div>
+      <button class="button voice-test" id="voiceTestButton" type="button">🎙 语音测试（跳过唤醒词）</button>
+      <div class="voice-state"><small>语音链路</small><b id="voicePhase">等待唤醒</b><span id="voiceModel">WakeNet —</span></div>
+    </div>
+  </article>
+
+  <article class="panel teacher-panel">
+    <div class="panel-head"><div><span class="kicker">实时老师</span><h3>当前教学反馈</h3></div><span id="teacherLevel" class="teacher-chip">—</span></div>
+    <div id="teacherText" class="teacher-main">准备连接 ESP32</div>
+    <div id="teacherSubtext" class="teacher-sub">—</div>
+    <div class="mini-stats">
+      <span>当前音 <b id="targetNote">—</b></span><span>音高 <b id="pitchHz">—</b></span>
+      <span>误差 <b id="centsText">—</b></span><span>速度 <b id="tempoText">—</b></span>
+      <span>模式 <b id="modeText">—</b></span>
+    </div>
+  </article>
+
+  <article class="panel">
+    <div class="panel-head"><div><span class="kicker">曲目进度</span><h3 id="songTitle">未开始</h3></div><strong id="songProgress">—</strong></div>
+    <div class="progress-track"><div id="progressBar"></div></div>
+    <div class="current-meta"><span id="stringText">弦：—</span><span id="fingerText">指法：—</span><span id="measureText">小节：—</span></div>
+    <div class="last-voice"><small>最近语音</small><strong id="asrText">—</strong><span id="intentText">Intent —</span></div>
+  </article>
+
+  <article class="panel span-2 review-panel">
+    <div class="panel-head"><div><span class="kicker">弱点强化</span><h3>按需选择片段慢速复练</h3></div><span id="reviewPhase">待机</span></div>
+    <div id="reviewDescription" class="review-description">完整拉完一曲后，系统会同时统计音准和节奏；节奏模式会优先选择失拍严重的小节。</div>
+    <div class="review-actions"><button class="button" id="startReviewButton" type="button">现在开始强化</button><button class="button ghost" id="skipReviewButton" type="button">跳过强化</button></div>
+  </article>
+
+  <article class="panel span-2">
+    <div class="panel-head"><div><span class="kicker">本次总结</span><h3>音准 / 节奏 / 稳定度 / 最弱小节</h3></div><span id="summaryMeta">—</span></div>
+    <div id="scoreSummary" class="score-summary"></div>
+    <div id="summaryCards" class="summary-grid"><div class="empty-card">完成一首曲目后显示总结。</div></div>
+  </article>
+
+  <article class="panel span-2">
+    <div class="panel-head"><div><span class="kicker">历史记录</span><h3>练习记忆</h3></div><button class="button ghost" id="refreshHistory" type="button">刷新</button></div>
+    <div id="historyList" class="history-list">暂无记录</div>
+  </article>
+
+  <details class="panel span-2"><summary>调试状态 JSON</summary><pre id="debugJson">等待数据…</pre></details>
+</section>
+{% endblock %}
+{% block scripts %}<style>
+/* Follow duration is measured by the board; no browser extrapolation. */
+.follow-panel[hidden]{display:none!important}
+.follow-panel{border:2px solid #4f8cff;border-radius:16px;padding:16px;display:grid;gap:9px;background:#eff6ff;color:#172554;grid-column:1/-1}
+.follow-prompt{font-size:clamp(20px,2.5vw,32px);line-height:1.3}
+.follow-time{font-size:clamp(17px,2vw,25px);font-variant-numeric:tabular-nums}
+.follow-track{height:20px;background:#cbd5e1;border-radius:10px;overflow:hidden}
+.follow-track i{display:block;width:0;height:100%;background:#3b82f6;transition:width .1s linear}
+.follow-panel[data-level="good"]{border-color:#16a34a;background:#dcfce7;color:#14532d}
+.follow-panel[data-level="good"] .follow-track i{background:#16a34a}
+.follow-panel[data-level="warn"]{border-color:#f59e0b;background:#fff7ed;color:#7c2d12}
+.follow-panel[data-level="warn"] .follow-track i{background:#f59e0b}
+</style><script src="{{ url_for('static', filename='trainer_ui.js') }}?v=10.8.0"></script><script src="{{ url_for('static', filename='control.js') }}?v=10.8.0"></script>{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}曲库 - Violin Song Library{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h2>曲目库</h2>
+    <p>先运行本网站，再让ESP32和电脑连接同一局域网。</p>
+  </div>
+  <a class="button" href="{{ url_for('upload_song') }}">+ 添加曲目</a>
+</section>
+
+<div class="notice">
+  <strong>正式导入格式：</strong>CSV（Excel可直接编辑并另存为CSV UTF-8）或 MusicXML。
+  PDF暂不直接识别，因为PDF转音符需要OMR，会引入额外识谱误差。
+</div>
+
+<div class="grid">
+{% for song in songs %}
+  <article class="card">
+    <div class="card-head">
+      <h3>{{ song.title }}</h3>
+      <span class="pill">{{ song.note_count }} events</span>
+    </div>
+    <p><strong>速度：</strong>{{ "%.0f"|format(song.tempo_bpm) }} BPM</p>
+    <p><strong>容差：</strong>±{{ "%.0f"|format(song.tolerance_cents) }} cent</p>
+    <p><strong>别名：</strong>
+      {% if song.aliases %}{{ " / ".join(song.aliases) }}{% else %}无{% endif %}
+    </p>
+    <p class="muted">{{ song.source }}</p>
+    <a class="button secondary" href="{{ url_for('song_detail', song_id=song.id) }}">查看曲目</a>
+  </article>
+{% endfor %}
+</div>
+
+<section class="api-box">
+  <h2>ESP32调用接口</h2>
+  <code>GET /api/songs/resolve?q=小星星</code>
+  <p>服务器会按曲名、别名、包含关系和轻量模糊匹配找到曲目并返回JSON。</p>
+</section>
+{% endblock %}

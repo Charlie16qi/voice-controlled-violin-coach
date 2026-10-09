@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}添加曲目{% endblock %}
+{% block content %}
+<h2>添加 / 更新曲目</h2>
+
+<div class="notice">
+  <strong>推荐：</strong>
+  如果你用MuseScore等打谱软件，导出 MusicXML（会保留小节；若谱内含 technical/string 与 fingering，也会用于指板） 后上传；
+  如果你用Excel整理音符，下载CSV模板，编辑后“另存为 CSV UTF-8”再上传。
+</div>
+
+<form method="post" enctype="multipart/form-data" class="form-card">
+  <h3>方式A：上传CSV或MusicXML</h3>
+  <label>曲谱文件
+    <input type="file" name="score_file" accept=".csv,.musicxml,.xml">
+  </label>
+
+  <p class="muted">MusicXML可在这里补充/覆盖元数据：</p>
+  <div class="two-col">
+    <label>曲名
+      <input name="title" placeholder="如：欢乐颂">
+    </label>
+    <label>别名
+      <input name="aliases" placeholder="多个别名用 | 分隔">
+    </label>
+    <label>速度 BPM
+      <input name="tempo_bpm" type="number" step="1" value="90">
+    </label>
+    <label>允许音准误差 cent
+      <input name="tolerance_cents" type="number" step="1" value="30">
+    </label>
+    <label>最短稳定时间 ms
+      <input name="hold_ms" type="number" step="10" value="320">
+    </label>
+  </div>
+
+  <hr>
+
+  <h3>方式B：网页直接输入音符</h3>
+  <p>格式：<code>音名:拍数</code>，空格分隔。支持升降号和REST。</p>
+  <textarea name="manual_sequence" rows="5"
+    placeholder="C4:1 C#4:0.5 D4:1 REST:0.5 E4:2"></textarea>
+
+  <button class="button" type="submit">保存到曲库</button>
+</form>
+
+<section class="api-box">
+  <h3>CSV字段</h3>
+  <p><code>title, aliases, tempo_bpm, tolerance_cents, hold_ms, order, note, beats, comment, source</code></p>
+  <p>音名支持 C3~C8、C#4、Db4、REST。降号会自动转成等音的升号形式。</p>
+</section>
+{% endblock %}

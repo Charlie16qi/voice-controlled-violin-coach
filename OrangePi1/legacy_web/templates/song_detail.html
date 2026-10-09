@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ song.title }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h2>{{ song.title }}</h2>
+    <p>{{ song.source }}</p>
+  </div>
+  <form method="post" action="{{ url_for('delete_song', song_id=song.id) }}"
+        onsubmit="return confirm('确定删除这首曲目吗？')">
+    <button class="button danger" type="submit">删除</button>
+  </form>
+</section>
+
+<div class="stats">
+  <div><strong>{{ song.notes|length }}</strong><span>事件</span></div>
+  <div><strong>{{ "%.0f"|format(song.tempo_bpm) }}</strong><span>BPM</span></div>
+  <div><strong>±{{ "%.0f"|format(song.tolerance_cents) }}</strong><span>cent</span></div>
+  <div><strong>{{ song.hold_ms }}</strong><span>hold ms</span></div>
+</div>
+
+<p><a class="button" href="{{ url_for('song_timing', song_id=song.id) }}">编辑节拍 / 拍号（自动备份）</a> · 拍号 {{ song.time_num }}/{{ song.time_den }}</p>
+<p><strong>别名：</strong>{{ " / ".join(song.aliases) if song.aliases else "无" }}</p>
+
+<div class="sequence">
+{% for item in song.notes %}
+  <span class="note-chip {% if item.note == 'REST' %}rest{% endif %}">
+    <b>{{ item.note }}</b>
+    <small>{{ item.beats }}拍</small>
+  </span>
+{% endfor %}
+</div>
+
+<h3>API预览</h3>
+<code>/api/songs/{{ song.slug }}</code>
+{% endblock %}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store,no-cache,must-revalidate,max-age=0">
+  <title>Violin Coach V10.8.0 Projection HUD</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='hud.css') }}?v=10.8.0">
+</head>
+<body>
+<div class="hud-shell">
+  <header class="hud-topbar">
+    <div class="song-block"><span class="micro">VIOLIN COACH V10.8.0 · SWITCH · PHRASE RHYTHM</span><strong id="hudSongTitle">等待曲目</strong></div>
+    <div class="current-target"><span>当前</span><strong id="hudTarget">—</strong><small id="hudTargetMeta">—</small></div>
+    <div class="hud-progress"><strong id="hudProgress">—</strong><div class="hud-progress-track"><i id="hudProgressBar"></i></div></div>
+    <div class="hud-status-stack"><div id="hudConnection" class="connection">等待 ESP32</div><div id="hudVoiceState" class="voice-pill">说“你好小智”</div></div>
+  </header>
+
+  <section class="score-zone" aria-label="滚动双行实时乐谱">
+    <div class="score-caption"><span id="hudSongSwitch" role="status">实时乐谱 · 可中途换曲；同曲保留进度</span><span id="hudScorePosition">—</span></div>
+    <div class="rolling-window" id="rollingWindow">
+      <div class="score-track" id="scoreTrack">
+        <div class="score-row"><svg id="scoreLine0" viewBox="0 0 1500 190"></svg></div>
+        <div class="score-row"><svg id="scoreLine1" viewBox="0 0 1500 190"></svg></div>
+        <div class="score-row"><svg id="scoreLine2" viewBox="0 0 1500 190"></svg></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rhythm-zone">
+    <div class="rhythm-mode"><span>模式</span><strong id="hudMode">音准</strong></div>
+    <div class="tempo-block"><span>速度</span><strong id="hudTempo">— BPM</strong></div>
+    <div class="beat-block">
+      <div id="hudBeatDots" class="hud-beat-dots"><i></i><i></i><i></i><i></i></div>
+      <strong id="hudBeatLabel">第 — 拍</strong>
+    </div>
+    <div class="duration-block"><span id="hudDurationName">时值 —</span><strong id="hudDurationMs">— ms</strong></div>
+    <div class="note-time-track"><i id="hudNoteTimeBar"></i></div>
+    <div id="hudMetroState" class="metro-state">节拍器关</div>
+  </section>
+
+  <section id="hudFollowPanel" class="follow-panel" hidden aria-label="逐音跟拍时长">
+  <strong id="hudFollowPrompt" class="follow-prompt" role="status">预备：请保持安静</strong>
+  <span id="hudFollowTime" class="follow-time">已拉 0 秒 / 目标 — 秒</span>
+  <div id="hudFollowTrack" class="follow-track" role="progressbar" aria-label="当前音时长" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="hudFollowFill"></i></div>
+  <small id="hudFollowRetry">当前音重试 0 次</small>
+</section>
+
+  <section id="teacherPanel" class="teacher-zone neutral">
+    <div class="teacher-icon">老师</div>
+    <div class="teacher-copy"><strong id="hudTeacherText">准备好以后开始练习</strong><span id="hudTeacherSubtext">我会同时听音准、节奏和稳定度。</span></div>
+    <div id="reviewStatus" class="review-status">实时指导</div>
+  </section>
+
+  <section class="board-zone">
+    <div class="board-head"><span>指板反馈</span><strong id="hudBoardTitle">等待目标音</strong><span id="hudMovement">—</span></div>
+    <svg id="hudFingerboard" viewBox="0 0 1500 300" aria-label="横向小提琴指板">
+      <defs>
+        <linearGradient id="hudBoardFill" x1="0" x2="1"><stop offset="0%" stop-color="#252b35"/><stop offset="100%" stop-color="#0f141b"/></linearGradient>
+        <filter id="hudShadow" x="-100%" y="-100%" width="300%" height="300%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-opacity=".4"/></filter>
+        <marker id="hudArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#ffd166"/></marker>
+      </defs>
+      <path d="M120 70 L1390 45 L1390 255 L120 230 Z" fill="url(#hudBoardFill)" stroke="#515b69" stroke-width="3"/>
+      <line x1="120" y1="70" x2="120" y2="230" stroke="#f2f5f8" stroke-width="8"/>
+      <g id="hudTicks"></g><g id="hudStrings"></g><g id="hudMoveLayer"></g><g id="hudTargetLayer"></g><g id="hudActualLayer"></g>
+    </svg>
+  </section>
+</div>
+<script src="{{ url_for('static', filename='trainer_ui.js') }}?v=10.8.0"></script>
+<script src="{{ url_for('static', filename='hud.js') }}?v=10.8.0"></script>
+</body>
+</html>

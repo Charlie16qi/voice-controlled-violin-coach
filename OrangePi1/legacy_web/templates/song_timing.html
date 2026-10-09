@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ song.title }} · 节拍编辑{% endblock %}
+{% block content %}
+<h2>{{ song.title }} · 节拍与拍号</h2>
+<p>按实际谱子填写。beats 和位置以四分音符为单位：四分=1，八分=0.5，附点四分=1.5。保存前自动备份原曲库，不改变音高。改拍号后也请核对每音的小节与位置，弱起小节可保留实际位置。</p>
+<form method="post">
+<div class="form-grid">
+<label>拍号分子<input name="time_num" type="number" min="1" max="12" value="{{ song.time_num }}" required></label>
+<label>拍号分母<select name="time_den">{% for d in [2,4,8,16] %}<option value="{{ d }}" {% if d==song.time_den %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
+<label>BPM（四分音符）<input name="tempo_bpm" type="number" min="40" max="220" value="{{ song.tempo_bpm }}" required></label>
+</div>
+<div style="overflow:auto"><table><thead><tr><th>序号</th><th>音高</th><th>时值 beats</th><th>小节</th><th>位置（从1开始）</th></tr></thead><tbody>
+{% for n in song.notes %}<tr><td>{{ loop.index }}</td><td>{{ n.note }}</td><td><input name="beats_{{ loop.index0 }}" type="number" min="0.0625" max="16" step="0.0625" value="{{ n.beats }}" required></td><td><input name="measure_{{ loop.index0 }}" type="number" min="1" value="{{ n.measure }}" required></td><td><input name="beat_{{ loop.index0 }}" type="number" min="1" max="49" step="0.0625" value="{{ n.beat }}" required></td></tr>{% endfor %}
+</tbody></table></div>
+<button class="button" type="submit">备份并保存节拍</button> <a href="{{ url_for('song_detail',song_id=song.id) }}">返回曲目</a>
+</form>
+<p>保存后：结束当前练习 → 再启动同一首，才能载入新谱。同曲防重置会保留旧进度，所以仅重复说曲名不会重新下载。也可以上传包含拍号、延音线的单声部 MusicXML。</p>
+{% endblock %}

@@ -1,0 +1,35 @@
+idf_component_register(
+    SRCS
+        "app_main.c"
+        "audio_inmp441.c"
+        "display_st7789.c"
+        "font5x7.c"
+        "hps_pitch.c"
+        "intent.c"
+        "rhythm_trainer.c"
+        "follow_trainer.c"
+        "rhythm_onset.c"
+        "led_bar.c"
+        "note_utils.c"
+        "song_library.c"
+        "wifi_time.c"
+        "wake_word.c"
+        "xfyun_asr.c"
+    INCLUDE_DIRS "."
+    REQUIRES
+        esp_driver_gpio
+        esp_driver_i2s
+        esp_driver_spi
+        esp_http_client
+        esp_lcd
+        esp_wifi
+        esp_event
+        esp_netif
+        nvs_flash
+        esp_timer
+        esp-dsp
+        esp-sr
+        esp_websocket_client
+        mbedtls
+        json
+)
